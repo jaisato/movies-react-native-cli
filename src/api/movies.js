@@ -91,7 +91,7 @@ export function getPopularMoviesApi(page = 1) {
 }
 
 export function searchMoviesApi(search) {
-  const url = `${API_HOST}/search/movie?api_key=${API_KEY}&language=${LANG}&query=${search}`;
+  const url = `${API_HOST}/search/movie?api_key=${API_KEY}&language=${LANG}&query=${encodeURIComponent(search)}`;
 
   return fetch(url)
     .then((response) => {
