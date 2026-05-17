@@ -21,6 +21,19 @@ export default function ModalVideo(props) {
     });
   }, []);
 
+  if (!video) {
+    return (
+      <Modal visible={show} contentContainerStyle={styles.modal}>
+        <Title style={{ color: '#fff' }}>Video no disponible</Title>
+        <IconButton
+          icon="close"
+          onPress={() => setShow(false)}
+          style={styles.close}
+        />
+      </Modal>
+    );
+  }
+
   return (
     <Modal visible={show} contentContainerStyle={styles.modal}>
       {Platform.OS === 'ios' ? (
@@ -29,8 +42,12 @@ export default function ModalVideo(props) {
         <WebView
           style={{ width: 500 }}
           source={{
-            uri: `https://www.youtube.com/embed/${video}?controls=0&showinfo=0`,
+            uri: `https://www.youtube.com/embed/${encodeURIComponent(video)}?controls=0&showinfo=0`,
           }}
+          javaScriptEnabled={true}
+          domStorageEnabled={false}
+          allowsInlineMediaPlayback={true}
+          mediaPlaybackRequiresUserAction={true}
         />
       )}
       <IconButton
