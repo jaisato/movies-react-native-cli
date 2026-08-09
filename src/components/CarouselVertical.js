@@ -38,7 +38,13 @@ function RenderItem(props) {
   useEffect(() => {
     getGenreMovieApi(genre_ids).then((response) => {
       setGenres(response);
-    });
+    })
+      .catch((error) => {
+        // fetch() only rejects on network failure and checkResponse() now
+        // rejects on any non-2xx, so without this the failure surfaces as an
+        // unhandled rejection and the screen just stays empty.
+        console.error('TMDb request failed', error);
+      });
   }, []);
 
   const onNavigation = () => {

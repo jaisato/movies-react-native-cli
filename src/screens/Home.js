@@ -20,19 +20,37 @@ export default function Home(props) {
   useEffect(() => {
     getNewsMoviesApi().then((response) => {
       setNewMovies(response.results);
-    });
+    })
+      .catch((error) => {
+        // fetch() only rejects on network failure and checkResponse() now
+        // rejects on any non-2xx, so without this the failure surfaces as an
+        // unhandled rejection and the screen just stays empty.
+        console.error('TMDb request failed', error);
+      });
   }, []);
 
   useEffect(() => {
     getAllGenresApi().then((response) => {
       setGenreList(response.genres);
-    });
+    })
+      .catch((error) => {
+        // fetch() only rejects on network failure and checkResponse() now
+        // rejects on any non-2xx, so without this the failure surfaces as an
+        // unhandled rejection and the screen just stays empty.
+        console.error('TMDb request failed', error);
+      });
   }, []);
 
   useEffect(() => {
     getGenreMoviesApi(genreSelected).then((response) => {
       setGenreMovies(response.results);
-    });
+    })
+      .catch((error) => {
+        // fetch() only rejects on network failure and checkResponse() now
+        // rejects on any non-2xx, so without this the failure surfaces as an
+        // unhandled rejection and the screen just stays empty.
+        console.error('TMDb request failed', error);
+      });
   }, [genreSelected]);
 
   const onChangeGenre = (newGenreId) => {

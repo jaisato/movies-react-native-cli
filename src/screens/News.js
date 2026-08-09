@@ -34,7 +34,13 @@ export default function News(props) {
       } else {
         setShowBtnMore(false);
       }
-    });
+    })
+      .catch((error) => {
+        // fetch() only rejects on network failure and checkResponse() now
+        // rejects on any non-2xx, so without this the failure surfaces as an
+        // unhandled rejection and the screen just stays empty.
+        console.error('TMDb request failed', error);
+      });
   }, [page]);
 
   return (
