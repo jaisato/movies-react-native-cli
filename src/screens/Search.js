@@ -26,7 +26,13 @@ export default function Search(props) {
     if (size(search) > 2) {
       searchMoviesApi(search).then((response) => {
         setMovies(response.results);
-      });
+      })
+        .catch((error) => {
+          // fetch() only rejects on network failure and checkResponse() now
+          // rejects on any non-2xx, so without this the failure surfaces as an
+          // unhandled rejection and the screen just stays empty.
+          console.error('TMDb request failed', error);
+        });
     }
   }, [search]);
 

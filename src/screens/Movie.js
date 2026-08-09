@@ -19,7 +19,13 @@ export default function Movie(props) {
   useEffect(() => {
     getMovieByIdApi(id).then((response) => {
       setMovie(response);
-    });
+    })
+      .catch((error) => {
+        // fetch() only rejects on network failure and checkResponse() now
+        // rejects on any non-2xx, so without this the failure surfaces as an
+        // unhandled rejection and the screen just stays empty.
+        console.error('TMDb request failed', error);
+      });
   }, []);
 
   if (!movie) return null;
