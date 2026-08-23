@@ -17,23 +17,48 @@ import { BASE_PATH_IMG } from '../utils/constants';
 
 const { width } = Dimensions.get('window');
 
+/** How long typing has to pause before a search is sent. */
+const SEARCH_DEBOUNCE_MS = 350;
+
 export default function Search(props) {
   const { navigation } = props;
   const [movies, setMovies] = useState(null);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (size(search) > 2) {
-      searchMoviesApi(search).then((response) => {
-        setMovies(response.results);
-      })
+    if (size(search) <= 2) {
+      return undefined;
+    }
+
+    // One request per keystroke, and nothing tied a response back to the term
+    // that asked for it: typing "batman" starts four searches, and whichever
+    // answers last wins. TMDb answering "bat" after "batman" left the screen
+    // showing results for a term the user had already finished typing.
+    //
+    // The timer collapses a burst of keystrokes into a single request, and the
+    // flag makes a response that arrives after the effect was torn down - a
+    // superseded term, or a screen the user has left - a no-op.
+    let current = true;
+
+    const timer = setTimeout(() => {
+      searchMoviesApi(search)
+        .then((response) => {
+          if (current) {
+            setMovies(response.results);
+          }
+        })
         .catch((error) => {
           // fetch() only rejects on network failure and checkResponse() now
           // rejects on any non-2xx, so without this the failure surfaces as an
           // unhandled rejection and the screen just stays empty.
           console.error('TMDb request failed', error);
         });
-    }
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      current = false;
+      clearTimeout(timer);
+    };
   }, [search]);
 
   return (
@@ -47,8 +72,11 @@ export default function Search(props) {
       />
       <ScrollView>
         <View style={styles.container}>
-          {map(movies, (movie, index) => (
-            <Movie key={index} movie={movie} navigation={navigation} />
+          {/* Keyed by movie id, not by position: with the index, a new set of
+              results reuses the previous row's component state and image for
+              whatever now sits at that position. */}
+          {map(movies, (movie) => (
+            <Movie key={movie.id} movie={movie} navigation={navigation} />
           ))}
         </View>
       </ScrollView>
