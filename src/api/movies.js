@@ -53,7 +53,9 @@ export function getAllGenresApi() {
 }
 
 export function getGenreMoviesApi(idGenres) {
-  const url = `${API_HOST}/discover/movie?api_key=${API_KEY}&with_genres=${idGenres}&language=${LANG}`;
+  const url = `${API_HOST}/discover/movie?api_key=${API_KEY}&with_genres=${encodeURIComponent(
+    idGenres,
+  )}&language=${LANG}`;
 
   return fetch(url)
     .then(checkResponse)
@@ -93,7 +95,13 @@ export function getPopularMoviesApi(page = 1) {
 }
 
 export function searchMoviesApi(search) {
-  const url = `${API_HOST}/search/movie?api_key=${API_KEY}&language=${LANG}&query=${search}`;
+  // The term is typed by the user and goes into a query-string value, so it has
+  // to be percent-encoded. Interpolated raw, "Fast & Furious" cut the URL at
+  // the ampersand - TMDb saw query=Fast and an extra Furious= parameter - and
+  // a '#' truncated it entirely.
+  const url = `${API_HOST}/search/movie?api_key=${API_KEY}&language=${LANG}&query=${encodeURIComponent(
+    search,
+  )}`;
 
   return fetch(url)
     .then(checkResponse)
