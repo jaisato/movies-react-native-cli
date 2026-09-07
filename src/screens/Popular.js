@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -20,7 +20,17 @@ export default function Popular(props) {
   const { navigation } = props;
   const [movies, setMovies] = useState(null);
   const [showBtnMore, setShowBtnMore] = useState(true);
-  const [loading, setLoading] = useState(false);
+  // Starts true: a page is already being fetched on mount.
+  const [loading, setLoading] = useState(true);
+  // The ref, not the state above, is what actually gates a press.
+  // setLoading happens inside a passive effect, which React runs after
+  // paint, so two taps delivered in the same batch both still see
+  // `loading === false` and both advance the page. React then coalesces
+  // them into a single render and the effect runs once, for the last
+  // page - the page in between is never requested and its films are lost
+  // for good. A ref updates synchronously, inside the handler, so the
+  // second press is refused before it can advance anything.
+  const loadingRef = useRef(true);
   const [page, setPage] = useState(1);
   const { theme } = usePreferences();
 
@@ -30,6 +40,7 @@ export default function Popular(props) {
     // itself or set state on an unmounted component.
     let active = true;
 
+    loadingRef.current = true;
     setLoading(true);
 
     getPopularMoviesApi(page).then((response) => {
@@ -70,15 +81,30 @@ export default function Popular(props) {
         console.error('TMDb request failed', error);
       })
       .finally(() => {
-        if (active) {
-          setLoading(false);
+        // A superseded effect must not release the lock: a newer one is in
+        // flight and holds it.
+        if (!active) {
+          return;
         }
+
+        loadingRef.current = false;
+        setLoading(false);
       });
 
     return () => {
       active = false;
     };
   }, [page]);
+
+  const loadMore = () => {
+    if (loadingRef.current) {
+      return;
+    }
+
+    loadingRef.current = true;
+    setLoading(true);
+    setPage((previous) => previous + 1);
+  };
 
   return (
     <ScrollView>
@@ -98,7 +124,7 @@ export default function Popular(props) {
           labelStyle={{ color: theme === 'dark' ? '#fff' : '#000' }}
           loading={loading}
           disabled={loading}
-          onPress={() => setPage((previous) => previous + 1)}>
+          onPress={loadMore}>
           Cargar mas...
         </Button>
       )}
