@@ -20,11 +20,23 @@ export default function Popular(props) {
   const { navigation } = props;
   const [movies, setMovies] = useState(null);
   const [showBtnMore, setShowBtnMore] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const { theme } = usePreferences();
 
   useEffect(() => {
+    // Guards a response that comes back after this effect has been
+    // superseded or the screen has gone, so a stale page cannot append
+    // itself or set state on an unmounted component.
+    let active = true;
+
+    setLoading(true);
+
     getPopularMoviesApi(page).then((response) => {
+      if (!active) {
+        return;
+      }
+
       const totalPages = response.total_pages;
 
       // The results were only kept while `page < totalPages`, so arriving at
@@ -48,11 +60,24 @@ export default function Popular(props) {
       }
     })
       .catch((error) => {
+        if (!active) {
+          return;
+        }
+
         // fetch() only rejects on network failure and checkResponse() now
         // rejects on any non-2xx, so without this the failure surfaces as an
         // unhandled rejection and the screen just stays empty.
         console.error('TMDb request failed', error);
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
       });
+
+    return () => {
+      active = false;
+    };
   }, [page]);
 
   return (
@@ -71,7 +96,9 @@ export default function Popular(props) {
           contentStyle={styles.lodadMoreContainer}
           style={styles.loadMore}
           labelStyle={{ color: theme === 'dark' ? '#fff' : '#000' }}
-          onPress={() => setPage(page + 1)}>
+          loading={loading}
+          disabled={loading}
+          onPress={() => setPage((previous) => previous + 1)}>
           Cargar mas...
         </Button>
       )}
