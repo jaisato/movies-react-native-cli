@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Platform } from 'react-native';
 import { Modal, IconButton, Title } from 'react-native-paper';
 import YouTube from 'react-native-youtube';
@@ -13,6 +13,9 @@ export default function ModalVideo(props) {
   // video === null, and the player was rendered for all three.
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  // The film whose lookup has completed successfully. Set only on success, so
+  // it doubles as "this one has nothing left to retry".
+  const answeredFor = useRef(null);
 
   useEffect(() => {
     // Nothing to fetch while the modal is closed - and returning early here is
@@ -21,6 +24,17 @@ export default function ModalVideo(props) {
     // failed for as long as the screen lived: closing and reopening ran
     // nothing.
     if (!show) {
+      return undefined;
+    }
+
+    // A lookup that already succeeded is kept, including one that answered "no
+    // trailer" - that is an answer, not a gap. Reopening should retry a
+    // failure, not redo work that worked: keying the effect on `show` alone
+    // meant every reopen cleared a good result, showed the loading message
+    // again and spent another TMDb request, and a redundant request that came
+    // back rate-limited would replace a trailer the user had just been
+    // watching with an error.
+    if (answeredFor.current === idMovie) {
       return undefined;
     }
 
@@ -45,6 +59,9 @@ export default function ModalVideo(props) {
           return;
         }
 
+        // Marked answered only here, on the success path, so a failure stays
+        // retryable on the next open.
+        answeredFor.current = idMovie;
         setVideo(idVideo);
         setLoading(false);
       })
