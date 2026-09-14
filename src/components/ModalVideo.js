@@ -13,8 +13,9 @@ export default function ModalVideo(props) {
   // video === null, and the player was rendered for all three.
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
-  // The film whose lookup has completed successfully. Set only on success, so
-  // it doubles as "this one has nothing left to retry".
+  // The film the state below is a completed answer for. Not "the last film that
+  // succeeded": that is a weaker claim, and the gap between the two was a bug -
+  // see where it is cleared.
   const answeredFor = useRef(null);
 
   useEffect(() => {
@@ -39,6 +40,20 @@ export default function ModalVideo(props) {
     }
 
     let current = true;
+
+    // Cleared as the lookup starts, together with the state it describes.
+    //
+    // It used to be set on success and never unset, so it could name a film
+    // whose result was no longer on screen. Films A, then B, then A again, with
+    // B's request failing: A succeeds and is recorded, B clears the screen and
+    // fails, and the ref still says A - so coming back to A took the early
+    // return above and left B's error message showing, for film A, on every
+    // reopen, permanently. The app reaches that sequence through
+    // `navigate('movie', { id })` on an already-mounted route.
+    //
+    // Clearing it here keeps the claim honest: while a lookup is in flight
+    // nothing on screen is a completed answer, so the ref names nothing.
+    answeredFor.current = null;
 
     setLoading(true);
     setVideo(null);
