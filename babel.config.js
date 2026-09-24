@@ -1,4 +1,4 @@
-module.exports = api => {
+module.exports = (api) => {
   const production = api.env('production');
 
   return {
