@@ -7,6 +7,8 @@
     "ios": "react-native run-ios",
     "start": "react-native start",
     "test": "jest",
+    "setup:env": "node scripts/setup-env.js",
+    "postinstall": "node scripts/setup-env.js",
     "lint": "eslint ."
   },
   "dependencies": {
@@ -39,7 +41,10 @@
     "react-test-renderer": "16.11.0"
   },
   "jest": {
-    "preset": "react-native"
+    "preset": "react-native",
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
+    ]
   },
   "resolutions": {
     "plist": "3.1.0",
