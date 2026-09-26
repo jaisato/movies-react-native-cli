@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -20,28 +20,90 @@ export default function News(props) {
   const [movies, setMovies] = useState(null);
   const [page, setPage] = useState(1);
   const [showBtnMore, setShowBtnMore] = useState(true);
+  // Starts true: a page is already being fetched on mount.
+  const [loading, setLoading] = useState(true);
+  // The ref, not the state above, is what actually gates a press.
+  // setLoading happens inside a passive effect, which React runs after
+  // paint, so two taps delivered in the same batch both still see
+  // `loading === false` and both advance the page. React then coalesces
+  // them into a single render and the effect runs once, for the last
+  // page - the page in between is never requested and its films are lost
+  // for good. A ref updates synchronously, inside the handler, so the
+  // second press is refused before it can advance anything.
+  const loadingRef = useRef(true);
   const { theme } = usePreferences();
 
   useEffect(() => {
+    // Guards a response that comes back after this effect has been
+    // superseded or the screen has gone, so a stale page cannot append
+    // itself or set state on an unmounted component.
+    let active = true;
+
+    loadingRef.current = true;
+    setLoading(true);
+
     getNewsMoviesApi(page).then((response) => {
+      if (!active) {
+        return;
+      }
+
       const totalPages = response.total_pages;
-      if (page < totalPages) {
-        if (!movies) {
-          setMovies(response.results);
-        } else {
-          setMovies([...movies, ...response.results]);
-        }
-      } else {
+
+      // The results were only kept while `page < totalPages`, so arriving at
+      // the final page took the else branch: the button was hidden and the
+      // twenty films that had just been downloaded were thrown away. The last
+      // page of both listings was unreachable - the request paid for and the
+      // response discarded. Appending always, and deciding the button
+      // separately, is what was meant.
+      //
+      // The append also goes through the updater form. Reading `movies` from
+      // the closure meant this effect depended on a value that is not in its
+      // dependency list, so two responses arriving before a re-render would
+      // each start from the same snapshot and the first one's films would be
+      // dropped.
+      setMovies((previous) =>
+        previous ? [...previous, ...response.results] : response.results,
+      );
+
+      if (page >= totalPages) {
         setShowBtnMore(false);
       }
     })
       .catch((error) => {
+        if (!active) {
+          return;
+        }
+
         // fetch() only rejects on network failure and checkResponse() now
         // rejects on any non-2xx, so without this the failure surfaces as an
         // unhandled rejection and the screen just stays empty.
         console.error('TMDb request failed', error);
+      })
+      .finally(() => {
+        // A superseded effect must not release the lock: a newer one is in
+        // flight and holds it.
+        if (!active) {
+          return;
+        }
+
+        loadingRef.current = false;
+        setLoading(false);
       });
+
+    return () => {
+      active = false;
+    };
   }, [page]);
+
+  const loadMore = () => {
+    if (loadingRef.current) {
+      return;
+    }
+
+    loadingRef.current = true;
+    setLoading(true);
+    setPage((previous) => previous + 1);
+  };
 
   return (
     <ScrollView>
@@ -56,7 +118,9 @@ export default function News(props) {
           contentStyle={styles.loadMoreContainer}
           style={styles.loadMore}
           labelStyle={{ color: theme === 'dark' ? '#fff' : '#000' }}
-          onPress={() => setPage(page + 1)}>
+          loading={loading}
+          disabled={loading}
+          onPress={loadMore}>
           Cargar mas...
         </Button>
       )}
