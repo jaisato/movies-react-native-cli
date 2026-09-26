@@ -55,5 +55,8 @@ buck-out/
 # Bundle artifact
 *.jsbundle
 
+# Local secrets (never commit a real API key): see src/utils/env.example.js
+src/utils/env.js
+
 # CocoaPods
 /ios/Pods/
