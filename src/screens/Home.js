@@ -42,15 +42,27 @@ export default function Home(props) {
   }, []);
 
   useEffect(() => {
-    getGenreMoviesApi(genreSelected).then((response) => {
-      setGenreMovies(response.results);
-    })
+    // Tapping through genres starts one request per tap and whichever answers
+    // last used to win, so the carousel could show "Acción" films under the
+    // "Comedia" tab. Only the response for the genre still selected is kept.
+    let active = true;
+
+    getGenreMoviesApi(genreSelected)
+      .then((response) => {
+        if (active) {
+          setGenreMovies(response.results);
+        }
+      })
       .catch((error) => {
         // fetch() only rejects on network failure and checkResponse() now
         // rejects on any non-2xx, so without this the failure surfaces as an
         // unhandled rejection and the screen just stays empty.
         console.error('TMDb request failed', error);
       });
+
+    return () => {
+      active = false;
+    };
   }, [genreSelected]);
 
   const onChangeGenre = (newGenreId) => {

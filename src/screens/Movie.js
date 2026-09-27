@@ -17,16 +17,32 @@ export default function Movie(props) {
   const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
-    getMovieByIdApi(id).then((response) => {
-      setMovie(response);
-    })
+    // Keyed on the id. navigate('movie', { id }) on a mounted "movie" route
+    // only updates its params, so with an empty dependency list the screen kept
+    // showing the first film while the trailer modal (keyed on idMovie) played
+    // the new one. The flag drops a response for an id that is no longer
+    // current, or for a screen that has gone.
+    let active = true;
+
+    setMovie(null);
+
+    getMovieByIdApi(id)
+      .then((response) => {
+        if (active) {
+          setMovie(response);
+        }
+      })
       .catch((error) => {
         // fetch() only rejects on network failure and checkResponse() now
         // rejects on any non-2xx, so without this the failure surfaces as an
         // unhandled rejection and the screen just stays empty.
         console.error('TMDb request failed', error);
       });
-  }, []);
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   if (!movie) return null;
 
