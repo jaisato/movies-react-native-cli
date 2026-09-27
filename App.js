@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { StatusBar, YellowBox } from 'react-native';
 import {
   Provider as PaperProvider,
@@ -15,26 +15,30 @@ import PreferencesContext from './src/context/PreferencesContext';
 
 YellowBox.ignoreWarnings(['Calling `getNode()`']);
 
+// The library themes are customised once, at load time, instead of being
+// mutated again on every render of App.
+DefaultThemePaper.colors.primary = '#1ae1f2';
+DarkThemePaper.colors.primary = '#1ae1f2';
+DarkThemePaper.colors.accent = '#1ae1f2';
+
+DarkThemeNavigation.colors.background = '#192734';
+DarkThemeNavigation.colors.card = '#15212b';
+
 export default function App() {
   const [theme, setTheme] = useState('dark');
 
-  DefaultThemePaper.colors.primary = '#1ae1f2';
-  DarkThemePaper.colors.primary = '#1ae1f2';
-  DarkThemePaper.colors.accent = '#1ae1f2';
-
-  DarkThemeNavigation.colors.background = '#192734';
-  DarkThemeNavigation.colors.card = '#15212b';
-
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
+  // Stable identity and no dependency on the `theme` closure, so the memoised
+  // context value below can list it honestly.
+  const toggleTheme = useCallback(() => {
+    setTheme((current) => (current === 'dark' ? 'light' : 'dark'));
+  }, []);
 
   const preference = useMemo(
     () => ({
       toggleTheme,
       theme,
     }),
-    [theme],
+    [theme, toggleTheme],
   );
 
   return (
