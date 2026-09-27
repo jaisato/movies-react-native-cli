@@ -18,9 +18,10 @@ export default function Home(props) {
   const [genreMovies, setGenreMovies] = useState(null);
 
   useEffect(() => {
-    getNewsMoviesApi().then((response) => {
-      setNewMovies(response.results);
-    })
+    getNewsMoviesApi()
+      .then((response) => {
+        setNewMovies(response.results);
+      })
       .catch((error) => {
         // fetch() only rejects on network failure and checkResponse() now
         // rejects on any non-2xx, so without this the failure surfaces as an
@@ -30,9 +31,10 @@ export default function Home(props) {
   }, []);
 
   useEffect(() => {
-    getAllGenresApi().then((response) => {
-      setGenreList(response.genres);
-    })
+    getAllGenresApi()
+      .then((response) => {
+        setGenreList(response.genres);
+      })
       .catch((error) => {
         // fetch() only rejects on network failure and checkResponse() now
         // rejects on any non-2xx, so without this the failure surfaces as an

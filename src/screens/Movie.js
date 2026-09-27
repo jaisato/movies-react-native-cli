@@ -44,7 +44,9 @@ export default function Movie(props) {
     };
   }, [id]);
 
-  if (!movie) return null;
+  if (!movie) {
+    return null;
+  }
 
   return (
     <>

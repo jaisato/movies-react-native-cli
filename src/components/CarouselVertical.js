@@ -36,9 +36,10 @@ function RenderItem(props) {
   const imageUrl = `${BASE_PATH_IMG}/w500${poster_path}`;
 
   useEffect(() => {
-    getGenreMovieApi(genre_ids).then((response) => {
-      setGenres(response);
-    })
+    getGenreMovieApi(genre_ids)
+      .then((response) => {
+        setGenres(response);
+      })
       .catch((error) => {
         // fetch() only rejects on network failure and checkResponse() now
         // rejects on any non-2xx, so without this the failure surfaces as an
