@@ -9,7 +9,9 @@ import { API_HOST, API_KEY, LANG } from '../utils/constants';
 function checkResponse(response) {
   if (!response.ok) {
     return Promise.reject(
-      new Error(`TMDb request failed: ${response.status} ${response.statusText}`),
+      new Error(
+        `TMDb request failed: ${response.status} ${response.statusText}`,
+      ),
     );
   }
 
@@ -35,7 +37,9 @@ export function getGenreMovieApi(idGenres) {
       const arrayGenres = [];
       idGenres.forEach((id) => {
         result.genres.forEach((item) => {
-          if (item.id === id) arrayGenres.push(item.name);
+          if (item.id === id) {
+            arrayGenres.push(item.name);
+          }
         });
       });
       return arrayGenres;

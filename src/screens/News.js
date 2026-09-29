@@ -42,33 +42,34 @@ export default function News(props) {
     loadingRef.current = true;
     setLoading(true);
 
-    getNewsMoviesApi(page).then((response) => {
-      if (!active) {
-        return;
-      }
+    getNewsMoviesApi(page)
+      .then((response) => {
+        if (!active) {
+          return;
+        }
 
-      const totalPages = response.total_pages;
+        const totalPages = response.total_pages;
 
-      // The results were only kept while `page < totalPages`, so arriving at
-      // the final page took the else branch: the button was hidden and the
-      // twenty films that had just been downloaded were thrown away. The last
-      // page of both listings was unreachable - the request paid for and the
-      // response discarded. Appending always, and deciding the button
-      // separately, is what was meant.
-      //
-      // The append also goes through the updater form. Reading `movies` from
-      // the closure meant this effect depended on a value that is not in its
-      // dependency list, so two responses arriving before a re-render would
-      // each start from the same snapshot and the first one's films would be
-      // dropped.
-      setMovies((previous) =>
-        previous ? [...previous, ...response.results] : response.results,
-      );
+        // The results were only kept while `page < totalPages`, so arriving at
+        // the final page took the else branch: the button was hidden and the
+        // twenty films that had just been downloaded were thrown away. The last
+        // page of both listings was unreachable - the request paid for and the
+        // response discarded. Appending always, and deciding the button
+        // separately, is what was meant.
+        //
+        // The append also goes through the updater form. Reading `movies` from
+        // the closure meant this effect depended on a value that is not in its
+        // dependency list, so two responses arriving before a re-render would
+        // each start from the same snapshot and the first one's films would be
+        // dropped.
+        setMovies((previous) =>
+          previous ? [...previous, ...response.results] : response.results,
+        );
 
-      if (page >= totalPages) {
-        setShowBtnMore(false);
-      }
-    })
+        if (page >= totalPages) {
+          setShowBtnMore(false);
+        }
+      })
       .catch((error) => {
         if (!active) {
           return;

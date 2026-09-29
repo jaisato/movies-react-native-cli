@@ -36,16 +36,27 @@ function RenderItem(props) {
   const imageUrl = `${BASE_PATH_IMG}/w500${poster_path}`;
 
   useEffect(() => {
-    getGenreMovieApi(genre_ids).then((response) => {
-      setGenres(response);
-    })
+    // Keyed on the item's genre ids: the carousel can recycle this component
+    // for another film, and a response for the previous one must not land.
+    let active = true;
+
+    getGenreMovieApi(genre_ids)
+      .then((response) => {
+        if (active) {
+          setGenres(response);
+        }
+      })
       .catch((error) => {
         // fetch() only rejects on network failure and checkResponse() now
         // rejects on any non-2xx, so without this the failure surfaces as an
         // unhandled rejection and the screen just stays empty.
         console.error('TMDb request failed', error);
       });
-  }, []);
+
+    return () => {
+      active = false;
+    };
+  }, [genre_ids]);
 
   const onNavigation = () => {
     navigation.navigate('movie', { id });
